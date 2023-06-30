@@ -1,34 +1,33 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import css from './Modal.module.css';
 
-export class Modal extends Component {
-  modalClose = ({ key, type }) => {
-    if (key === 'Escape' || type === 'click') {
-      this.props.onClick('');
+export const Modal = ({ onItemClick, onClick }) => {
+  const [imageSource, setImageSource] = useState(onItemClick);
+
+  const modalClose = (e) => {
+    if (e.key === "Escape" || e.type === "click") {
+      setImageSource("");
+      onClick("");
     }
   };
 
-  componentDidMount() {
-    document.addEventListener('keydown', this.modalClose, false);
-  }
+  useEffect(() => {
+    document.addEventListener("keydown", modalClose, false);
 
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.modalClose, false);
-  }
+    return () => {
+      document.removeEventListener("keydown", modalClose, false);
+    };
+  });
 
-  render() {
-    const { onItemClick } = this.props;
-
-    return (
-      <div className = {css.Overlay} onClick ={ this.modalClose}>
-        <div className = {css.Modal}>
-          <img src = {onItemClick} alt ="modal" />
-        </div>
+  return (
+    <div className={css.Overlay} onClick={modalClose}>
+      <div className={css.Modal}>
+        <img src={imageSource} alt="modal" />
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 Modal.propTypes = {
   onItemClick: PropTypes.string,

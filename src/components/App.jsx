@@ -1,128 +1,89 @@
-import React, { Component } from 'react';
-import { getPhoto } from './Api/api';
-import { Searchbar } from './Searchbar/Searchbar';
-import { ImageGallery } from './ImageGallery/ImageGallery';
-import { Button } from './Button/Button';
-import { Loader } from './Loader/Loader';
-import { Modal } from './Modal/Modal';
+import React, { useState, useEffect } from "react";
+import { getPhoto } from "./Api/api";
+import { Searchbar } from "./Searchbar/Searchbar";
+import { ImageGallery } from "./ImageGallery/ImageGallery";
+import { Button } from "./Button/Button";
+import { Loader } from "./Loader/Loader";
+import { Modal } from "./Modal/Modal";
 
-import css from './App.module.css'
+import css from "./App.module.css";
 
+export const App = () => {
+  const [photos, setPhotos] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [modal, setModal] = useState("");
 
-
-export class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      photos: [],
-      searchValue: '',
-      page: 1,
-      error: null,
-      isLoading: false,
-      modal: '',
-    };
-  }
-
-
-  
-  componentDidMount() {
-    const { searchValue } = this.state;
-    if (searchValue !== '') {
-      this.fetchData();
-    }
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    const { searchValue, page } = this.state;
-    if (searchValue !== prevState.searchValue || page !== prevState.page) {
-      this.fetchData();
-    }
-  }
-
-  fetchData = async () => {
-    const { searchValue, page } = this.state;
-    this.setState({ isLoading: true });
-
-    try {
-      const photos = await getPhoto(searchValue, page);
-      this.setState(prevState => ({
-        photos: [
-          ...prevState.photos,
-          ...photos.map(photo => ({
+  useEffect(() => {
+    const asyncFunc = async () => {
+      try {
+        setIsLoading(true);
+        const searchImg = await getPhoto(searchValue, page);
+        const searchedImg = searchImg.map((photo) => {
+          return {
             id: photo.id,
             webformatURL: photo.webformatURL,
             largeImageURL: photo.largeImageURL,
             tags: photo.tags,
-          })),
-        ],
-      }));
-    } catch (error) {
-      this.setState({ error });
-      console.log(error);
-    } finally {
-      this.setState({ isLoading: false });
-    }
-  };
-
-  handleSearchValue = value => {
-    this.setState({ photos: [], searchValue: value });
-  };
-
-  handleButtonVisibility = () => {
-    const { photos } = this.state;
-    return photos.length < 12 ? 'none' : 'flex';
-  };
-
-  handleLoadMore = () => {
-    this.setState(
-      prevState => ({ page: prevState.page + 1 }),
-      () => {
-        setTimeout(() => {
-          window.scrollTo({
-            top: document.body.scrollHeight,
-            behavior: 'smooth',
-          });
-        }, 500);
+          };
+        });
+        searchValue !== "" && setPhotos((p) => [...p, ...searchedImg]);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
       }
-    );
+    };
+
+    asyncFunc();
+  }, [searchValue, page]);
+
+  const handleSearchValue = (e) => {
+    setPhotos([]);
+    setPage(1);
+    setSearchValue(e);
   };
 
-  handleModal = onItemClick => {
-    this.setState({ modal: onItemClick });
+  const handleModal = (onItemClick) => setModal(onItemClick);
+
+  const handleButtonVisibility = () => {
+    return photos.length < 12 ? "none" : "flex";
   };
 
-  handleModalClose = () => {
-    this.setState({ modal: '' });
+  const handleLoadMore = () => {
+    setPage((p) => p + 1);
+
+    setTimeout(() => {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth",
+      });
+    }, 500);
   };
 
-  passImgToModal = () => {
-    return this.state.modal;
+  const handleModalClose = (e) => {
+    setModal(e);
   };
 
-  render() {
-    const { photos, isLoading, modal } = this.state;
-    const isPhotosAvailable = photos.length > 0;
+  // passImgToModal = (e) => {
+  //    setModal(e);
+  //  };
 
-    return (
-      <>
-        <Searchbar onSubmit={this.handleSearchValue} />
-        {isPhotosAvailable && (
-          <ImageGallery photos={photos} onItemClick={this.handleModal} />
-        )}
-        {isLoading && <Loader />}
-        <div
-          className={css.buttonPosition}
-          style={{ display: this.handleButtonVisibility() }}
-        >
-          {!isLoading && <Button onClick={this.handleLoadMore} />}
-        </div>
-        {modal !== '' && (
-          <Modal
-            onItemClick={this.passImgToModal()}
-            onClick={this.handleModalClose}
-          />
-        )}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <Searchbar onSubmit={handleSearchValue} />
+      <ImageGallery photos={photos} onItemClick={handleModal} />
+      {isLoading && <Loader />}
+      <div
+        className={css.buttonPosition}
+        style={{ display: handleButtonVisibility() }}
+      >
+        {!isLoading && <Button onClick={handleLoadMore} />}
+      </div>
+      {modal !== "" && <Modal onItemClick={modal} onClick={handleModalClose} />}
+    </>
+  );
+};
+
+
