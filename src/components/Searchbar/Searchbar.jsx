@@ -12,10 +12,10 @@ export const Searchbar = ({ onSubmit }) => {
     setName('');
   };
 
-  const handleChange = e => {
-    const { value } = e.currentTarget;
-    setName({ name: value });
-  };
+ const handleChange = (e) => {
+   const { value } = e.currentTarget;
+   setName(value);
+ };
 
 
 
